@@ -1,0 +1,162 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+class KMeans
+{
+    vector<vector<double> > dataset;
+    int clusters,samples,features;
+    vector<int> c,cnt;
+    vector<vector<double> > clusterCentroid;
+
+    public:
+    KMeans(vector<vector<double> > &data,int clus)
+    {
+        vector<double> temp;
+        dataset = data;
+        clusters = clus;
+        samples = dataset.size();
+        features = dataset[0].size();
+
+        for(int i = 0;i<clusters;i++)
+        clusterCentroid.push_back(temp);
+
+        randomInitClusters();
+        for(int i = 0;i<samples;i++)
+        c.push_back(-1);
+
+        start();
+    }
+    double distance(vector<double> point,vector<double> centroid)
+    {
+        double result = 0.0;
+        for(int i = 0;i<point.size();i++)
+        result = result + (centroid[i]-point[i])*(centroid[i]-point[i]);
+        result = sqrt(result);
+        return result;
+    }
+
+    void randomInitClusters()
+    {
+        srand(time(NULL));
+        for(int i = 0;i<clusters;i++)
+        {
+            int idx = rand()%(dataset.size());
+            clusterCentroid[i] = dataset[idx];
+        }
+    }
+
+    void assignClusters()
+    {
+        for(int i = 0;i<samples;i++)
+        {
+            int pos = 0;
+            double dist = distance(dataset[i],clusterCentroid[0]);
+            for(int j = 1;j<clusters;j++)
+            {
+                double temp = distance(dataset[i],clusterCentroid[j]);
+                if(temp<dist)
+                {
+                    dist = temp;
+                    pos = j;
+                }
+            }
+            c[i] = pos;
+        }
+    }
+    double cost(vector<vector<double> > clusterCentroid)
+    {
+        double result = 0.0;
+        for(int i = 0;i<samples;i++)
+        {
+            double temp = distance(dataset[i],clusterCentroid[c[i]]);
+            result = result + (temp*temp)/(cnt[c[i]]*1.0);
+        }
+        return result;
+    }
+
+    void start()
+    {
+        int maxIterations = 10; //regulates the total number of random init of cluster centroids
+
+        //stuff init
+        vector<double> temp;
+        vector<vector<double> > means;
+        double costR = 100000000;
+        for(int i = 0;i<features;i++)
+        temp.push_back(0.0);
+
+        for(int i = 0;i<maxIterations;i++)
+        {
+            randomInitClusters();
+            cnt.clear();
+            means.clear();
+
+            for(int i = 0;i<clusters;i++)
+            {
+                means.push_back(temp);
+                cnt.push_back(0);
+            }
+
+            //cout<<endl;
+            for(int l=0;l<100;l++) //adjust the upper bound for the degree of convergence
+            {
+                assignClusters();
+                for(int i = 0;i<samples;i++)
+                {
+                    cnt[c[i]]++;
+                    for(int j = 0;j<features;j++)
+                    means[c[i]][j]+=dataset[i][j];
+                }
+                for(int i = 0;i<clusters;i++)
+                {
+                    for(int j = 0;j<features;j++)
+                    {
+                        if(cnt[i]!=0)
+                        means[i][j]/=cnt[i];
+                    }
+                }
+                //updating the cluster centroid
+                double costF = cost(means);
+                //cout<<costF<<endl;
+                if(costF<costR)
+                {
+                    costR = costF;
+                    clusterCentroid = means;
+                }
+            }
+        }
+    }
+};
+
+
+int main()
+{
+    freopen("ola.txt","r",stdin);
+
+    vector<vector<double> > d;
+
+
+    double lat,lon,tme;
+
+    int count = 0;
+
+    for(int i = 0;i<=5000;i++)
+    {
+
+        cin>>tme>>lat>>lon;
+
+        vector<double> temp;
+        temp.push_back(tme);
+        temp.push_back(lat);
+        temp.push_back(lon);
+
+        d.push_back(temp);
+    }
+
+    KMeans classifier(d,2);
+
+    return 0;
+}
+
+
+
